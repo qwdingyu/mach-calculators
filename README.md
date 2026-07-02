@@ -59,8 +59,8 @@ npm pack --dry-run
 4. 或在 GitHub Actions 手动触发 Publish workflow。
 
 ```bash
-git tag v0.1.2
-git push origin v0.1.2
+git tag v0.1.3
+git push origin v0.1.3
 ```
 
 `@usethink/publish-toolkit@0.1.15` 已修复此前的 pnpm 误判问题：默认使用 npm、精确检查 `package@version`、通过临时 npm userconfig 注入认证，并避免把 token 写入项目目录。本包保留 npm lockfile，CI 中使用 `npm ci` 安装依赖。
