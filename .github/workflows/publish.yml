@@ -1,0 +1,138 @@
+# ============================================================================
+# @usethink/mach-calculators — npm 包自动发布 Workflow
+# ============================================================================
+#
+# 触发方式（两种）：
+#   1. 推送 git tag（推荐日常使用）
+#        git tag v0.4.0 && git push origin v0.4.0
+#
+#   2. GitHub UI 手动触发（应急兜底）
+#        仓库 → Actions → Publish → Run workflow
+#
+# 前置条件：
+#   NPM_TOKEN 通过 scripts/setup-github-secrets.sh 一键配置
+# ============================================================================
+
+name: Publish
+
+on:
+  # ---- 方式一：推送 tag 时自动发布 ----
+  push:
+    tags:
+      - 'v*'
+
+  # ---- 方式二：在 GitHub UI 中手动触发 ----
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry-run 模式（只预览，不实际发布）'
+        type: boolean
+        default: false
+      tag:
+        description: 'dist-tag（正式版用 latest，beta 用 beta）'
+        type: string
+        default: latest
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Build & Publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup pnpm
+        run: corepack enable && corepack prepare pnpm@latest --activate
+
+      - name: Verify tools
+        run: |
+          node --version
+          npm --version
+          pnpm --version
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref_name }}"
+
+      # 直接使用 npm 安装依赖，避免 pnpm 在 CI 中的各种兼容问题
+      # 使用 npm ci 确保 lockfile 不被修改，避免触发 git check 失败
+      - name: Install dependencies
+        run: |
+          unset NPM_CONFIG_USERCONFIG
+          npm ci
+
+      - name: Verify package.json
+        run: |
+          echo "📦 Package info:"
+          node -e "const p = require('./package.json'); console.log('  name:', p.name); console.log('  version:', p.version); console.log('  private:', p.private);"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "  mode: manual (dry-run=${{ inputs.dry_run }})"
+          else
+            echo "  mode: auto (tag=${{ github.ref_name }})"
+          fi
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish to npm
+        id: publish
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.dry_run }}" = "true" ]; then
+              echo "🧪 Dry-run 模式..."
+              pnpm exec publish-toolkit publish --dry-run --registry=https://registry.npmjs.org/ --verbose
+              echo "dry_run=true" >> $GITHUB_OUTPUT
+            else
+              echo "🚀 手动触发正式发布..."
+              pnpm exec publish-toolkit publish --registry=https://registry.npmjs.org/ --verbose
+              echo "dry_run=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "🚀 Tag 触发自动发布: ${{ github.ref_name }}"
+            pnpm exec publish-toolkit publish --registry=https://registry.npmjs.org/ --verbose
+            echo "dry_run=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Display publish result
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          
+          if [ "${{ steps.publish.outputs.dry_run }}" = "true" ]; then
+            echo "🧪 Dry-run 成功！"
+            echo "   包: ${PACKAGE_NAME}@${PACKAGE_VERSION}"
+            echo "   查看: https://www.npmjs.com/package/${PACKAGE_NAME}"
+          else
+            echo "✅ ${PACKAGE_NAME}@${PACKAGE_VERSION} 发布成功！"
+            echo "   查看: https://www.npmjs.com/package/${PACKAGE_NAME}"
+          fi
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "❌ Workflow 失败"
+          echo "请检查以下步骤的日志："
+          echo "  - Type check"
+          echo "  - Run tests"
+          echo "  - Build"
+          echo "  - Publish to npm"
