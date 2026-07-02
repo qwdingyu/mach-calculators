@@ -10,7 +10,7 @@
 #        仓库 → Actions → Publish → Run workflow
 #
 # 前置条件：
-#   NPM_TOKEN 通过 scripts/setup-github-secrets.sh 一键配置
+#   NPM_TOKEN 通过 GitHub Secret 配置
 # ============================================================================
 
 name: Publish
@@ -57,14 +57,10 @@ jobs:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Setup pnpm
-        run: corepack enable && corepack prepare pnpm@latest --activate
-
       - name: Verify tools
         run: |
           node --version
           npm --version
-          pnpm --version
           echo "Event: ${{ github.event_name }}"
           echo "Ref: ${{ github.ref_name }}"
 
@@ -97,19 +93,18 @@ jobs:
       - name: Publish to npm
         id: publish
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            if [ "${{ inputs.dry_run }}" = "true" ]; then
-              echo "🧪 Dry-run 模式..."
-              npx publish-toolkit publish --dry-run --registry=https://registry.npmjs.org/ --verbose
-              echo "dry_run=true" >> $GITHUB_OUTPUT
-            else
-              echo "🚀 手动触发正式发布..."
-              npx publish-toolkit publish --registry=https://registry.npmjs.org/ --verbose
-              echo "dry_run=false" >> $GITHUB_OUTPUT
-            fi
+          DIST_TAG="${{ inputs.tag || 'latest' }}"
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            DIST_TAG="latest"
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "🧪 Dry-run 模式..."
+            npm publish --access public --tag "$DIST_TAG" --registry=https://registry.npmjs.org/ --dry-run
+            echo "dry_run=true" >> $GITHUB_OUTPUT
           else
-            echo "🚀 Tag 触发自动发布: ${{ github.ref_name }}"
-            npx publish-toolkit publish --registry=https://registry.npmjs.org/ --verbose
+            echo "🚀 发布到 npm: tag=$DIST_TAG"
+            npm publish --access public --tag "$DIST_TAG" --registry=https://registry.npmjs.org/
             echo "dry_run=false" >> $GITHUB_OUTPUT
           fi
 
