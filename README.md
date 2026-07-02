@@ -51,7 +51,7 @@ npm pack --dry-run
 
 ## 发布
 
-发布流程与 `@usethink/cf-core` 保持一致：
+发布流程使用 GitHub Actions 中的纯 npm workflow：
 
 1. 确认 `package.json` 版本号已更新。
 2. 确认 GitHub 仓库配置了 `NPM_TOKEN` secret。
@@ -62,3 +62,5 @@ npm pack --dry-run
 git tag v0.1.0
 git push origin v0.1.0
 ```
+
+本包不使用 `@usethink/publish-toolkit`。该工具当前版本会在 runner 存在 pnpm 时优先调用 `pnpm publish`，容易与 pnpm v11 的 ignored build scripts 策略冲突；本包的安装、验证、构建和发布均使用 npm。
