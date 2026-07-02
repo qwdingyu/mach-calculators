@@ -100,11 +100,11 @@ jobs:
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
             echo "🧪 Dry-run 模式..."
-            npm publish --access public --tag "$DIST_TAG" --registry=https://registry.npmjs.org/ --dry-run
+            npm run publish:dry-run -- --tag "$DIST_TAG"
             echo "dry_run=true" >> $GITHUB_OUTPUT
           else
             echo "🚀 发布到 npm: tag=$DIST_TAG"
-            npm publish --access public --tag "$DIST_TAG" --registry=https://registry.npmjs.org/
+            npm run release -- --tag "$DIST_TAG"
             echo "dry_run=false" >> $GITHUB_OUTPUT
           fi
 

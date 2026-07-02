@@ -35,7 +35,7 @@ export const comprehensiveQuoteSchema: CalculatorDefinition = {
   version: '1.0.0',
   
   formula: {
-    module: '@eforge/mach-calculators/formulas',
+    module: '@usethink/mach-calculators/formulas',
     function: 'calculateComprehensiveQuote',
     source: '文件10《加工件費用計算表》',
   },

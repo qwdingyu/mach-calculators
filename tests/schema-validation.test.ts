@@ -21,7 +21,7 @@ describe('comprehensiveQuoteSchema', () => {
   });
 
   it('应该有正确的 formula 配置', () => {
-    expect(comprehensiveQuoteSchema.formula.module).toBe('@eforge/mach-calculators/formulas');
+    expect(comprehensiveQuoteSchema.formula.module).toBe('@usethink/mach-calculators/formulas');
     expect(comprehensiveQuoteSchema.formula.function).toBe('calculateComprehensiveQuote');
     expect(comprehensiveQuoteSchema.formula.source).toContain('文件10');
   });

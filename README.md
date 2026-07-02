@@ -51,7 +51,7 @@ npm pack --dry-run
 
 ## 发布
 
-发布流程使用 GitHub Actions 中的纯 npm workflow：
+发布流程使用 `@usethink/publish-toolkit`，并显式走 npm 发布路径：
 
 1. 确认 `package.json` 版本号已更新。
 2. 确认 GitHub 仓库配置了 `NPM_TOKEN` secret。
@@ -59,8 +59,8 @@ npm pack --dry-run
 4. 或在 GitHub Actions 手动触发 Publish workflow。
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
-本包不使用 `@usethink/publish-toolkit`。该工具当前版本会在 runner 存在 pnpm 时优先调用 `pnpm publish`，容易与 pnpm v11 的 ignored build scripts 策略冲突；本包的安装、验证、构建和发布均使用 npm。
+`@usethink/publish-toolkit@0.1.15` 已修复此前的 pnpm 误判问题：默认使用 npm、精确检查 `package@version`、通过临时 npm userconfig 注入认证，并避免把 token 写入项目目录。本包保留 npm lockfile，CI 中使用 `npm ci` 安装依赖。

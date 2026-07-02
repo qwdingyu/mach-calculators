@@ -194,7 +194,7 @@ export interface CalculatorDefinition {
   version?: string;
   /** 公式来源 */
   formula: {
-    /** 模块路径（相对于@eforge/mach-calculators/formulas） */
+    /** 模块路径（相对于 @usethink/mach-calculators/formulas） */
     module: string;
     /** 函数名 */
     function: string;
