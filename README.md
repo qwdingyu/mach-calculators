@@ -59,8 +59,18 @@ npm pack --dry-run
 4. 或在 GitHub Actions 手动触发 Publish workflow。
 
 ```bash
-git tag v0.1.3
-git push origin v0.1.3
+# 1. 更新 package.json/package-lock.json 版本，例如：
+npm version patch --no-git-tag-version
+
+# 2. 提交后打同版本 tag，触发 GitHub Action 发布：
+VERSION=$(node -p "require('./package.json').version")
+git tag "v${VERSION}"
+git push origin "v${VERSION}"
+
+# 3. 发布完成后，下游站点更新依赖：
+# npm install @usethink/mach-calculators@${VERSION}
 ```
+
+> 注意：GitHub Action 会跳过已经存在于 npmjs 的同版本包，因此每次公式变更必须先提升版本号。
 
 `@usethink/publish-toolkit@0.1.15` 已修复此前的 pnpm 误判问题：默认使用 npm、精确检查 `package@version`、通过临时 npm userconfig 注入认证，并避免把 token 写入项目目录。本包保留 npm lockfile，CI 中使用 `npm ci` 安装依赖。

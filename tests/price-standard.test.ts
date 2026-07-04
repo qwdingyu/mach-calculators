@@ -257,8 +257,8 @@ describe('综合报价计算', () => {
     });
     expect(quote.slowWireFee).toBe(75);
     expect(quote.subtotal).toBe(75);
-    expect(quote.tax).toBeCloseTo(12.75, 1);
-    expect(quote.total).toBeCloseTo(87.75, 1);
+    expect(quote.tax).toBeCloseTo(9.75, 1);
+    expect(quote.total).toBeCloseTo(84.75, 1);
   });
 
   it('复杂报价：多工序组合', () => {
@@ -289,10 +289,10 @@ describe('综合报价计算', () => {
     expect(quote.machineTimeFee).toBe(270);
     // 税前 = 150+120+22.5+60+270 = 622.5
     expect(quote.subtotal).toBe(622.5);
-    // 税金 = 622.5 * 0.17 = 105.825
-    expect(quote.tax).toBeCloseTo(105.83, 1);
-    // 总价 = 622.5 + 105.825 = 728.325
-    expect(quote.total).toBeCloseTo(728.33, 1);
+    // 税金 = 622.5 * 0.13 = 80.925
+    expect(quote.tax).toBeCloseTo(80.93, 1);
+    // 总价 = 622.5 + 80.925 = 703.425
+    expect(quote.total).toBeCloseTo(703.43, 1);
   });
 
   it('含模板厚度附加', () => {

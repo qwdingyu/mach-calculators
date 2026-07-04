@@ -14,6 +14,7 @@
  */
 
 import { PI } from './math-utils.js';
+import { DEFAULT_VAT_RATE, normalizeTaxRate } from './tax-utils.js';
 
 // ═══════════════════════════════════════════════════
 // 1. 加工费计算
@@ -284,13 +285,13 @@ export interface ComprehensiveQuoteResult {
  * 公式链（台湾风格）：
  *   小计 = 加工费 + 材料费
  *   调整后费用 = 小计 × K1 × K2 × K3 × K4
- *   最终报价 = 调整后费用 × (1 + 利润率 + 税率)
+ *   最终报价 = 调整后费用 × (1 + 利润率) × (1 + 税率)
  * 
  * 示例验证：
  *   加工费=500，材料费=200，综合乘数=1.5，利润率20%，税率13%
  *   小计 = 500 + 200 = 700
  *   调整后 = 700 × 1.5 = 1050
- *   最终 = 1050 × (1 + 0.20 + 0.13) = 1050 × 1.33 = 1396.50
+ *   最终 = 1050 × (1 + 0.20) × (1 + 0.13) = 1050 × 1.356 = 1423.80
  */
 export function calculateComprehensiveQuote(params: {
   processingFee: number;      // 加工费（元）
@@ -300,7 +301,7 @@ export function calculateComprehensiveQuote(params: {
   surface: string;            // 表面粗糙度
   batchSize: number;          // 批量
   profitMargin?: number;      // 利润率，默认20%
-  taxRate?: number;           // 税率，默认13%
+  taxRate?: number;           // 税率，默认 DEFAULT_VAT_RATE；可传 0.13 或 13
 }): ComprehensiveQuoteResult {
   const {
     processingFee,
@@ -310,8 +311,9 @@ export function calculateComprehensiveQuote(params: {
     surface,
     batchSize,
     profitMargin = 0.20,
-    taxRate = 0.13,
+    taxRate,
   } = params;
+  const normalizedTaxRate = normalizeTaxRate(taxRate, DEFAULT_VAT_RATE);
 
   // 小计
   const subTotal = processingFee + materialFee;
@@ -323,7 +325,7 @@ export function calculateComprehensiveQuote(params: {
   const adjustedFee = Math.round(subTotal * compositeFactor * 100) / 100;
 
   // 最终报价
-  const finalQuote = Math.round(adjustedFee * (1 + profitMargin + taxRate) * 100) / 100;
+  const finalQuote = Math.round(adjustedFee * (1 + profitMargin) * (1 + normalizedTaxRate) * 100) / 100;
 
   return {
     processingFee: Math.round(processingFee * 100) / 100,
@@ -332,7 +334,7 @@ export function calculateComprehensiveQuote(params: {
     compositeFactor,
     adjustedFee,
     profitMargin,
-    taxRate,
+    taxRate: normalizedTaxRate,
     finalQuote,
   };
 }

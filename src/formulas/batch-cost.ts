@@ -11,6 +11,8 @@
  * - 包装费用明细
  */
 
+import { DEFAULT_VAT_RATE, calculateTax, normalizeTaxRate } from './tax-utils.js';
+
 // ═══════════════════════════════════════════════════
 // 一、工序加工费明细
 // ═══════════════════════════════════════════════════
@@ -245,7 +247,7 @@ export interface BatchCostSummary {
  *   管理费 = 工厂成本 × 管理费率
  *   利润前成本 = 工厂成本 + 管理费 + 包装费 + 运输费
  *   利润 = 利润前成本 × 利润率
- *   税金 = (利润前成本 + 利润) × 税率(默认17%)
+ *   税金 = (利润前成本 + 利润) × 税率(默认13%)
  *   单价 = 利润前成本 + 利润 + 税金
  */
 export function calculateBatchCost(params: {
@@ -261,7 +263,7 @@ export function calculateBatchCost(params: {
   packagingFee: number;           // 包装费（元/件）
   transportFee: number;           // 运输费（元/件）
   profitRate: number;             // 利润率，默认10%
-  taxRate?: number;               // 税率，默认17%
+  taxRate?: number;               // 税率，默认 DEFAULT_VAT_RATE；可传 0.13 或 13
   productionVolume: number;       // 生产批量
 }): BatchCostSummary {
   // 制造成本
@@ -279,7 +281,7 @@ export function calculateBatchCost(params: {
   const factoryCost = manufacturingCost + scrapLoss + params.moldAmortization;
   
   // 管理费
-  const managementRate = params.managementRate || 0.10;
+  const managementRate = params.managementRate ?? 0.10;
   const managementExpense = Math.round(factoryCost * managementRate * 10000) / 10000;
   
   // 利润前成本
@@ -290,8 +292,8 @@ export function calculateBatchCost(params: {
   const profit = Math.round(costBeforeProfit * params.profitRate * 10000) / 10000;
   
   // 税金
-  const taxRate = params.taxRate || 0.17;
-  const tax = Math.round((costBeforeProfit + profit) * taxRate * 10000) / 10000;
+  const taxRate = normalizeTaxRate(params.taxRate, DEFAULT_VAT_RATE);
+  const tax = Math.round(calculateTax(costBeforeProfit + profit, taxRate) * 100) / 100;
   
   // 单价
   const unitPrice = Math.round((costBeforeProfit + profit + tax) * 10000) / 10000;

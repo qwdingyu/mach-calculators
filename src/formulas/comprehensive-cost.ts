@@ -12,6 +12,8 @@
  * - 总成本汇总
  */
 
+import { DEFAULT_VAT_RATE, calculateTax, normalizeTaxRate } from './tax-utils.js';
+
 // ═══════════════════════════════════════════════════
 // 一、材料参数
 // ═══════════════════════════════════════════════════
@@ -322,7 +324,7 @@ export interface ComprehensiveCostSummary {
  *   报废损失 = (材料费 + 加工费) × 报废率
  *   管理费 = 工厂成本 × 管理费率(10-20%)
  *   利润 = 工厂成本 × 利润率(15-30%)
- *   税金 = (工厂成本 + 管理费 + 利润) × 17%
+ *   税金 = (工厂成本 + 管理费 + 利润) × 13%
  *   总价 = 工厂成本 + 管理费 + 利润 + 税金
  * 
  * 示例验证（Excel）：
@@ -341,7 +343,7 @@ export function calculateComprehensiveCost(params: {
   difficulty?: DifficultyLevel;
   managementRate?: number;    // 10-20%, 默认15%
   profitRate?: number;        // 15-30%, 默认20%
-  taxRate?: number;           // 默认17%
+  taxRate?: number;           // 税率，默认 DEFAULT_VAT_RATE；可传 0.13 或 13
 }): ComprehensiveCostSummary {
   // 加工费
   const processingFee = params.processingTasks.reduce(
@@ -383,19 +385,19 @@ export function calculateComprehensiveCost(params: {
   const factoryCost = baseCost + scrapFee;
   
   // 管理费
-  const managementRate = params.managementRate || 0.15;
+  const managementRate = params.managementRate ?? 0.15;
   const managementFee = Math.round(factoryCost * managementRate * 100) / 100;
   
   // 利润
-  const profitRate = params.profitRate || 0.20;
+  const profitRate = params.profitRate ?? 0.20;
   const profit = Math.round(factoryCost * profitRate * 100) / 100;
   
   // 税前合计
   const subtotalBeforeTax = factoryCost + managementFee + profit;
   
   // 税金
-  const taxRate = params.taxRate || 0.17;
-  const tax = Math.round(subtotalBeforeTax * taxRate * 100) / 100;
+  const taxRate = normalizeTaxRate(params.taxRate, DEFAULT_VAT_RATE);
+  const tax = calculateTax(subtotalBeforeTax, taxRate);
   
   return {
     materialFee: Math.round(params.materialFee * 100) / 100,

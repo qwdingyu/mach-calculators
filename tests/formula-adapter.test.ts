@@ -68,8 +68,8 @@ describe('comprehensiveQuoteAdapter', () => {
     expect(result.success).toBe(true);
     expect(result.data!.compositeFactor).toBe(0.85);
     expect(result.data!.adjustedFee).toBe((10000 + 5000) * 0.85); // 12750
-    // 最终报价 = 12750 × (1 + 0.15 + 0.13) = 12750 × 1.28 = 16320
-    expect(result.data!.finalQuote).toBe(16320);
+    // 最终报价 = 12750 × 1.15 × 1.13 = 16568.62
+    expect(result.data!.finalQuote).toBe(16568.62);
   });
 
   it('应该使用默认利润率20%和税率13%', () => {
@@ -85,8 +85,25 @@ describe('comprehensiveQuoteAdapter', () => {
     expect(result.success).toBe(true);
     expect(result.data!.profitMargin).toBe(0.20);
     expect(result.data!.taxRate).toBe(0.13);
-    // 小计 = 700, 乘数 = 1.0, 最终 = 700 × 1.33 = 931
-    expect(result.data!.finalQuote).toBe(931);
+    // 小计 = 700, 乘数 = 1.0, 最终 = 700 × 1.20 × 1.13 = 949.2
+    expect(result.data!.finalQuote).toBe(949.2);
+  });
+
+  it('应该保留显式 0% 税率', () => {
+    const result = comprehensiveQuoteAdapter({
+      processingFee: 500,
+      materialFee: 200,
+      complexity: 'simple',
+      precision: 'general',
+      surface: 'general',
+      batchSize: 1000,
+      profitMargin: 20,
+      taxRate: 0,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data!.taxRate).toBe(0);
+    expect(result.data!.finalQuote).toBe(840);
   });
 
   it('应该处理批量边界值', () => {

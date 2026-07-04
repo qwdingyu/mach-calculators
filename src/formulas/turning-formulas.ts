@@ -162,28 +162,33 @@ export function calculateTaperTurning(params: {
  * 
  * 公式：
  *   Dh = D公称 - 0.13P（中径）
- *   N = 1000 × Vc / (π × Dh)
- *   N螺纹 = Vc / 0.8（主轴转速）
- *   T = L / N螺纹 × i
+ *   Vc螺纹 = Vc × 0.8（螺纹加工降速约20%）
+ *   N = 1000 × Vc螺纹 / (π × Dh)
+ *   T = L / (N × f) × i
  * 
  * 示例验证：
  *   M20, P=2.5, L=30, Vc=20
  *   Dh = 20 - 0.13×2.5 = 19.675
- *   N螺纹 = 20/0.8 = 25 rpm
- *   T = 30/25 × i（i根据螺距查表）
+ *   Vc螺纹 = 20 × 0.8 = 16 m/min
+ *   N = 1000 × 16 / (π × 19.675) ≈ 258.85 rpm
+ *   T = 30 / (258.85 × f) × i（i根据螺距查表）
  */
 export function calculateThreadTurning(params: {
   nominalDiameter: number;    // D公称
   pitch: number;              // P（螺距）
   length: number;             // L
   cuttingSpeed: number;       // Vc
+  feedPerRev?: number;        // f，未传时按单线螺纹螺距估算
   numPasses: number;          // i（根据螺距查表）
 }): number {
-  const { nominalDiameter, pitch, length, cuttingSpeed, numPasses } = params;
+  const { nominalDiameter, pitch, length, cuttingSpeed, feedPerRev = pitch, numPasses } = params;
   
   const Dh = nominalDiameter - 0.13 * pitch;
-  const threadSpeed = cuttingSpeed / 0.8;
-  const T = length / threadSpeed * numPasses;
+  if (Dh <= 0 || feedPerRev <= 0) return NaN;
+
+  const threadSpeed = cuttingSpeed * 0.8;
+  const N = (1000 * threadSpeed) / (PI * Dh);
+  const T = length / (N * feedPerRev) * numPasses;
   
   return Math.round(T * 100) / 100;
 }

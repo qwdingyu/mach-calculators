@@ -5,6 +5,7 @@
  * 并统一包装为计算器渲染层可消费的成功/失败结果。
  */
 import { calculateComprehensiveQuote } from '../formulas/comprehensive-quote.js';
+import { DEFAULT_VAT_RATE } from '../formulas/tax-utils.js';
 import type { CalculationResult } from '../schema/calculator-schema.js';
 
 export interface ComprehensiveQuoteAdapterInput {
@@ -25,6 +26,8 @@ export function comprehensiveQuoteAdapter(
   params: ComprehensiveQuoteAdapterInput,
 ): CalculationResult {
   try {
+    const profitMarginInput = Number(params.profitMargin);
+    const taxRateInput = Number(params.taxRate);
     const formulaParams = {
       processingFee: Number(params.processingFee) || 0,
       materialFee: Number(params.materialFee) || 0,
@@ -32,8 +35,8 @@ export function comprehensiveQuoteAdapter(
       precision: params.precision || 'general',
       surface: params.surface || 'general',
       batchSize: Number(params.batchSize) || 1,
-      profitMargin: (Number(params.profitMargin) || 20) / 100,
-      taxRate: (Number(params.taxRate) || 13) / 100,
+      profitMargin: Number.isFinite(profitMarginInput) ? profitMarginInput / 100 : 0.20,
+      taxRate: Number.isFinite(taxRateInput) ? taxRateInput / 100 : DEFAULT_VAT_RATE,
     };
 
     return {

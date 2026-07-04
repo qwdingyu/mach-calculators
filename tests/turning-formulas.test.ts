@@ -121,13 +121,15 @@ describe('8种车削方式工时计算', () => {
       pitch: 2.5,
       length: 30,
       cuttingSpeed: 20,
+      feedPerRev: 2.5,
       numPasses: 6,
     });
 
     // Dh = 20 - 0.13 × 2.5 = 19.675
-    // N螺纹 = 20 / 0.8 = 25 rpm
-    // T = 30 / 25 × 6 = 7.20
-    expect(time).toBeCloseTo(7.20, 1);
+    // Vc螺纹 = 20 × 0.8 = 16 m/min
+    // N = 1000 × 16 / (π × 19.675) ≈ 258.85 rpm
+    // T = 30 / (258.85 × 2.5) × 6 ≈ 0.28
+    expect(time).toBeCloseTo(0.28, 1);
   });
 
   // ═══════════════════════════════════════════════════
@@ -214,14 +216,14 @@ describe('8种车削方式工时计算', () => {
       externalTurning: 3.35,
       internalTurning: 3.50,
       taperTurning: 2.36,
-      threadTurning: 7.20,
+      threadTurning: 0.28,
       groove: 0.84,
       drilling: 0.17,
       boring: 4.05,
       formTurning: 16.17,
     });
 
-    expect(result.totalTime).toBeCloseTo(37.64, 1);
+    expect(result.totalTime).toBeCloseTo(30.72, 1);
     expect(result.externalTurning).toBe(3.35);
   });
 

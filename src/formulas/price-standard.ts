@@ -11,8 +11,10 @@
  * - 各加工方式小时费率
  * - 模板厚度倍率
  * - 铜线加工倍数
- * - 报价汇总（含税17%增值税）
+ * - 报价汇总（税率可配置，默认参考值来自 DEFAULT_VAT_RATE）
  */
+
+import { DEFAULT_VAT_RATE, calculateTax } from './tax-utils.js';
 
 // ═══════════════════════════════════════════════════
 // 一、慢走丝线割加工
@@ -329,7 +331,7 @@ export function getCopperWireMultiplier(wireDiameter: number): number {
  * 增值税税率
  * 来源：文件4 Sheet2 F模块备注
  */
-export const VAT_RATE = 0.17;
+export const VAT_RATE = DEFAULT_VAT_RATE;
 
 /**
  * 报价汇总接口
@@ -343,7 +345,7 @@ export interface QuoteSummary {
   plateThicknessFee: number;     // 模板厚度附加费
   copperWireFee: number;         // 铜线附加费
   subtotal: number;              // 合计（税前）
-  tax: number;                   // 税金（17%增值税）
+  tax: number;                   // 税金
   total: number;                 // 含税总价
 }
 
@@ -354,7 +356,7 @@ export interface QuoteSummary {
  * 
  * 公式：
  *   税前合计 = 各分项费用之和
- *   税金 = 税前合计 × 17%
+ *   税金 = 税前合计 × 税率
  *   含税总价 = 税前合计 + 税金
  */
 export function calculateQuote(params: {
@@ -370,6 +372,7 @@ export function calculateQuote(params: {
   machineTimeFees?: Partial<Record<ProcessingMachineType, number>>; // { milling: 2.5, cnc: 1.5, ... }
   plateThickness?: number;
   copperWireDiameter?: number;
+  taxRate?: number;
 }): QuoteSummary {
   // 各分项费用
   const slowWireFee = params.slowWireArea
@@ -431,7 +434,7 @@ export function calculateQuote(params: {
     + machineTimeFee + plateThicknessFee + copperWireFee;
 
   // 税金和总价
-  const tax = subtotal * VAT_RATE;
+  const tax = calculateTax(subtotal, params.taxRate ?? VAT_RATE);
   const total = subtotal + tax;
 
   return {

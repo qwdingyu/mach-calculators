@@ -174,8 +174,8 @@ describe('综合报价+乘数体系', () => {
     // 调整后 = 700 × 2.43 = 1701.00
     expect(result.adjustedFee).toBeCloseTo(1701.00, 1);
 
-    // 最终 = 1701 × 1.33 = 2262.33
-    expect(result.finalQuote).toBeCloseTo(2262.33, 1);
+    // 最终 = 1701 × 1.20 × 1.13 = 2306.56
+    expect(result.finalQuote).toBeCloseTo(2306.56, 1);
   });
 
   it('综合报价（简单情况）', () => {
@@ -197,8 +197,8 @@ describe('综合报价+乘数体系', () => {
     // 调整后 = 150 × 1.0 = 150
     expect(result.adjustedFee).toBe(150);
 
-    // 最终 = 150 × 1.33 = 199.50
-    expect(result.finalQuote).toBe(199.5);
+    // 最终 = 150 × 1.20 × 1.13 = 203.40
+    expect(result.finalQuote).toBe(203.4);
   });
 
   it('综合报价（超复杂情况）', () => {
@@ -223,8 +223,8 @@ describe('综合报价+乘数体系', () => {
     // 调整后 = 2500 × 11.52 = 28800
     expect(result.adjustedFee).toBeCloseTo(28800, 1);
 
-    // 最终 = 28800 × 1.38 = 39744
-    expect(result.finalQuote).toBeCloseTo(39744, 1);
+    // 最终 = 28800 × 1.25 × 1.13 = 40680
+    expect(result.finalQuote).toBeCloseTo(40680, 1);
   });
 
   // ═══════════════════════════════════════════════════

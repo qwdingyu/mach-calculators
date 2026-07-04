@@ -2,6 +2,7 @@
  * 数控加工工时、成本、切削参数与报价公式统一导出。
  */
 export * from './math-utils.js';
+export * from './tax-utils.js';
 export * from './price-standard.js';
 export * from './process-time.js';
 export * from './cutting-params.js';

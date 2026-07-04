@@ -75,10 +75,15 @@ jobs:
         run: |
           echo "📦 Package info:"
           node -e "const p = require('./package.json'); console.log('  name:', p.name); console.log('  version:', p.version); console.log('  private:', p.private);"
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "  mode: manual (dry-run=${{ inputs.dry_run }})"
           else
             echo "  mode: auto (tag=${{ github.ref_name }})"
+            if [ "${{ github.ref_name }}" != "v${PACKAGE_VERSION}" ]; then
+              echo "❌ tag 与 package.json 版本不一致：tag=${{ github.ref_name }}, package=v${PACKAGE_VERSION}"
+              exit 1
+            fi
           fi
 
       - name: Type check
@@ -90,6 +95,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Pack dry-run
+        run: npm pack --dry-run
+
       - name: Check published version
         id: published
         run: |
@@ -100,7 +108,13 @@ jobs:
 
           if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version --registry=https://registry.npmjs.org/ >/dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
-            echo "ℹ️ ${PACKAGE_NAME}@${PACKAGE_VERSION} 已存在，跳过发布。"
+            echo "ℹ️ ${PACKAGE_NAME}@${PACKAGE_VERSION} 已存在。"
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+              echo "🧪 Dry-run 允许检查已存在版本。"
+            else
+              echo "❌ 非 dry-run 发布不能使用已存在版本，请先提升 package.json 版本。"
+              exit 1
+            fi
           else
             echo "exists=false" >> $GITHUB_OUTPUT
             echo "✅ ${PACKAGE_NAME}@${PACKAGE_VERSION} 尚未发布，可以继续。"

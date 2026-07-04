@@ -139,7 +139,7 @@ export const comprehensiveQuoteSchema: CalculatorDefinition = {
       min: 0,
       max: 50,
       step: 1,
-      placeholder: '默认13%',
+      placeholder: '默认参考13%',
       helpText: '增值税税率（百分比）',
       default: 13,
     },
